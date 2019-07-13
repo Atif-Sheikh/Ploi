@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, StatusBar, Button, Keyboard, BackHandler, AsyncStorage, Dimensions, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, StatusBar, Button, Keyboard, BackHandler, Dimensions, Platform } from 'react-native';
 import { Content, Input, Item, Thumbnail } from 'native-base';
 import axios from 'axios';
+import AsyncStorage from '@react-native-community/async-storage';
 import { Actions } from 'react-native-router-flux'; // New code
 import { Loader } from '../loader';
 
@@ -14,7 +15,8 @@ class Login extends Component {
             email: '',
             password: '',
             loading: false,
-            error: null
+            error: null,
+            checkLogin: true
         };
     };
 
@@ -23,9 +25,18 @@ class Login extends Component {
     };
 
     checkLogin = async () => {
-        let token = await JSON.parse(AsyncStorage.getItem('token'));
-        if(token && token.length) {
-            alert('Already Login');
+        try {
+            let token = await AsyncStorage.getItem('token');
+            if(token) {
+                let parsed = JSON.parse(token); 
+                console.log(parsed, '>>>>>>>>>>>>')
+                Actions.home(parsed);
+            } else{
+                this.setState({ checkLogin: false });
+            }
+        }catch(err) {
+            console.log(err);
+            this.setState({ checkLogin: false });
         }
     };
 
@@ -74,7 +85,6 @@ class Login extends Component {
 
     login = () => {
         const { email, password } = this.state;
-
         if(!this.validateEmail(email)) {
             this.setState({ error: 'Please enter valid email address' });
             return;
@@ -102,8 +112,10 @@ class Login extends Component {
                 }
             });
             if(resp.status === 200){
-                const { data: { success: { token } } } = resp;
-                await AsyncStorage.setItem('token', token);
+                const { data: { success } } = resp;
+                console.log(success, ">>>>>>>>>>>>>>>>>> success")
+                await AsyncStorage.setItem('token', JSON.stringify(success));
+                Actions.home(success);
                 this.setState({ loading: false });
             }else {
                 throw 'Error';
@@ -119,14 +131,14 @@ class Login extends Component {
     };
 
     render() {
-        const { error } = this.state;
+        const { error, checkLogin } = this.state;
         const title = '';
         Platform.OS === 'android' && StatusBar.setBarStyle('light-content', true);
         Platform.OS === 'android' && StatusBar.setBackgroundColor('#62a6a6');
         return (
             <View style={styles.container}>
                 {
-                    this.props.checkLoader ?
+                    checkLogin ?
                         <View style={{ justifyContent: 'center', position: 'absolute', width, height }}>
                             <Loader color="#058d94" />
                         </View> : <View>
@@ -149,6 +161,7 @@ class Login extends Component {
 
                             <Item style={styles.item} regular>
                                 <Input placeholder='Password'
+                                    returnKeyType='done'
                                     placeholderTextColor="black"
                                     onChangeText={password => this.setState({ password, error: null })}
                                     style={styles.input} secureTextEntry={true}
