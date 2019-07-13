@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, StatusBar, Button, Keyboard, BackHandler, TouchableHighlight, Dimensions, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, StatusBar, Button, Keyboard, BackHandler, AsyncStorage, Dimensions, Platform } from 'react-native';
 import { Content, Input, Item, Thumbnail } from 'native-base';
+import axios from 'axios';
 import { Actions } from 'react-native-router-flux'; // New code
 import { Loader } from '../loader';
 
@@ -12,71 +13,104 @@ class Login extends Component {
         this.state = {
             email: '',
             password: '',
-            // loading: false,
+            loading: false,
+            error: null
         };
     };
-    componentWillMount() {
-        // if (this.props.from && this.props.from === "signup") {
-        //     console.log("coming from signup")
-        // }
-        // else {
-        //     this.props.checkUser();
-        // }
-        // BackHandler.addEventListener("hardwareBackPress", this._handlePress)
-        // console.warn(moment(new Date()).format("YYYY-MM-DD"));
-        // BackHandler.addEventListener('hardwareBackPress', () => {
-        //     BackHandler.exitApp();
-        // });
-    };
-    
-    // _onPressOkay = () => {
-    //     BackHandler.exitApp();
-    // };
 
-    // _handlePress = () => {
-    //     if (Actions.currentScene === "login") {
-    //         Alert.alert(
-    //             'Exit App',
-    //             'Exiting the application?',
-    //             [
-    //                 { text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel' },
-    //                 { text: 'OK', onPress: () => { this._onPressOkay() } },
-    //             ],
-    //             { cancelable: true }
-    //         )
-    //     } else {
-    //         Actions.pop();
-    //     }
-    //     return true;
-    // };
+    componentDidMount(){
+        this.checkLogin()
+    };
+
+    checkLogin = async () => {
+        let token = await JSON.parse(AsyncStorage.getItem('token'));
+        if(token && token.length) {
+            alert('Already Login');
+        }
+    };
+
+    componentWillMount() {
+        BackHandler.addEventListener("hardwareBackPress", this._handlePress);
+    };
+
+    componentWillUnmount() {
+        BackHandler.removeEventListener('hardwareBackPress', this._handlePress);
+    }
+    
+    _onPressOkay = () => {
+        BackHandler.exitApp();
+    };
+
+    _handlePress = () => {
+        Alert.alert(
+            'Exit App',
+            'Exiting the application?',
+            [
+                { text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel' },
+                { text: 'OK', onPress: () => this._onPressOkay }
+            ],
+            { cancelable: true }
+        );
+        return true;
+    };
     
     static navigationOptions = {
         header: null
     };
     
     renderFunc = () => {
-        const { loader } = this.props;
-        if (loader) {
-            return <Loader />
+        const { loading } = this.state;
+        if (loading) {
+            return <Loader color='#62a6a6' />
         } else {
             return <TouchableOpacity style={styles.signinBtn} onPress={this.login}><Text style={{ color: '#fff', fontSize: fontScale * 16 }}>SIGN IN</Text></TouchableOpacity>
         };
     };
 
+    validateEmail = (email) => {
+        var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        return re.test(String(email).toLowerCase());
+    }
+
     login = () => {
         const { email, password } = this.state;
-        // Actions.home();
-        if (email, password) {
-            // this.setState({loading: true});
-            const user = {
-                email: this.state.email.trim(),
-                password: this.state.password.trim(),
-            };
-            // this.props.signin(user);
-            Keyboard.dismiss();
 
+        if(!this.validateEmail(email)) {
+            this.setState({ error: 'Please enter valid email address' });
+            return;
+        }
+        if (email && password) {
+            this.setState({ loading: true }, () => {
+                const user = {
+                    email: this.state.email.trim(),
+                    password: this.state.password.trim(),
+                };
+                this.loginUser(user);
+                Keyboard.dismiss();
+            });
         } else {
-            Alert.alert(null, 'Please enter all fields!');
+            this.setState({ error: 'Please enter all fields!' });
+        }
+    };
+
+    loginUser = async (data) => {
+        try{
+            let resp = await axios.post('https://ploi.io/api/login', JSON.stringify(data), {
+                "headers": {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                }
+            });
+            if(resp.status === 200){
+                const { data: { success: { token } } } = resp;
+                await AsyncStorage.setItem('token', token);
+                this.setState({ loading: false });
+            }else {
+                throw 'Error';
+            }
+        }catch(err) {
+            console.log(err)
+            this.setState({ loading: false, error: 'Wrong credentials' });
         }
     };
 
@@ -85,6 +119,7 @@ class Login extends Component {
     };
 
     render() {
+        const { error } = this.state;
         const title = '';
         Platform.OS === 'android' && StatusBar.setBarStyle('light-content', true);
         Platform.OS === 'android' && StatusBar.setBackgroundColor('#62a6a6');
@@ -103,11 +138,11 @@ class Login extends Component {
                                 SIGN IN
                             </Text>
                             <Item style={styles.item} regular>
-                                <Input textContentType='email'
+                                <Input textContentType='emailAddress'
                                     returnKeyType='next'
                                     placeholder='E-mail'
                                     placeholderTextColor="black"
-                                    onChangeText={email => this.setState({ email })} style={styles.input}
+                                    onChangeText={email => this.setState({ email, error: null })} style={styles.input}
                                     onSubmitEditing={() => this._focusNextField('pass')}
                                 />
                             </Item>
@@ -115,12 +150,12 @@ class Login extends Component {
                             <Item style={styles.item} regular>
                                 <Input placeholder='Password'
                                     placeholderTextColor="black"
-                                    onChangeText={password => this.setState({ password })}
+                                    onChangeText={password => this.setState({ password, error: null })}
                                     style={styles.input} secureTextEntry={true}
                                     ref="pass"
                                 />
                             </Item>
-                            <Text style={{ color: 'red' }}>{this.props.error}</Text>
+                            <Text style={{ color: 'red', textAlign: 'center', marginBottom: 10 }}>{ error }</Text>
                             <View style={styles.btn}>
                                 {this.renderFunc()}
                             </View>

@@ -74,6 +74,22 @@ class Signup extends Component {
                 email: this.state.email.trim(),
                 password: this.state.password.trim(),
             };
+
+            // axios.post('https://ploi.io/api/register', {
+            //     "headers": {
+            //         "Accept": "application/json"
+			// 		"Content-Type": "application/json"
+            //     },
+            //     {
+            //         "name": "Ploi2",
+            //         "email": "info2@ploi.io",
+            //         "password": "test123ploi",
+            //         "password_confirmation": "test123ploi"
+            //     }
+            // })
+            // .then((response) => {
+            //     console.log(respo
+            //     })
             // this.props.signin(user);
             Keyboard.dismiss();
 
@@ -107,7 +123,7 @@ class Signup extends Component {
                             </Text>
                             
                             <Item style={styles.item} regular>
-                                <Input textContentType='text'
+                                <Input textContentType='name'
                                     returnKeyType='next'
                                     placeholder='Name'
                                     placeholderTextColor="black"
@@ -117,7 +133,7 @@ class Signup extends Component {
                             </Item>
                             
                             <Item style={styles.item} regular>
-                                <Input textContentType='email'
+                                <Input textContentType='emailAddress'
                                     returnKeyType='next'
                                     placeholder='E-mail'
                                     placeholderTextColor="black"

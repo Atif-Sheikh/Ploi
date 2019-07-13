@@ -1,3 +1,3 @@
 # Ploi
 
-React-Native App For Descibing back-end service
+React-Native App For Describing back-end service
