@@ -73,7 +73,7 @@ class Home extends Component {
             'Exiting the application?',
             [
                 { text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel' },
-                { text: 'OK', onPress: () => this._onPressOkay }
+                { text: 'OK', onPress: () => this._onPressOkay() }
             ],
             { cancelable: true }
         );

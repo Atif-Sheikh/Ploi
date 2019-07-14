@@ -39,7 +39,7 @@ class Sidebar extends Component {
                     {/* <Text style={{ fontSize: 16 }}>{name}</Text> */}
                 </View>
                 <View style={{ height: "60%" }}>
-                    <ListItem onPress={() => Actions.profile()} avatar style={{ margin: 12 }}>
+                    <ListItem avatar style={{ margin: 12 }}>
                         <Icon name='person' />
                         <Text style={{ marginLeft: '11%', color: '#000' }}>My Profile</Text>
                     </ListItem>
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
         marginLeft: "11%"
     },
     logoutBtn: {
-        backgroundColor: '#62a6a6',
+        backgroundColor: '#ef8626',
         height: "10%",
         width: '100%',
         alignSelf: 'center',
